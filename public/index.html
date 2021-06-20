@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue School - Firebase Authentification</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.6.0/firebase-auth.js"></script>
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-analytics.js"></script>
+     <!-- VUE CDN -->
+     <script src="https://unpkg.com/vue"></script>
+</head>
+<body>
+  <div id="app">
+    <nav class="navbar navbar-light" v-if="authUser">
+      <div class="container-fluid">
+        <div class="navbar__content d-flex align-items-center justify-content-between py-2">
+          <div class="d-flex align-items-end">
+            <img :src="authUser.photoURL" v-if="authUser.photoURL">
+            <img src="https://thumbs.dreamstime.com/t/default-male-avatar-profile-picture-icon-grey-man-photo-placeholder-vector-illustration-88414414.jpg" v-else>
+            <span class="navbar__name ml-4">{{ authUser.displayName || 'Anonymous' }}</span>
+          </div>
+          <div class="d-flex">
+            <button class="btn btn-google" v-if="!linkedGoogle" @click="linkGoogle">Link Google Account</button>
+            <button class="btn btn-google" v-else @click="unlinkGoogle">Unlink Google Account</button>
+            <button class="btn btn-primary ml-4" @click="signOut">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="container pb-5">
+
+      <h1 class="text-center my-5">Vue School - Firebase Authentification</h1>
+
+      <!-- logged in -->
+      <div v-if="authUser">
+        <h5 class="mb-4">Signed in as {{ authUser.email }}</h5>
+
+        <form @submit.prevent="updateProfile">
+          <h2 class="mb-3">Update Profile</h2>
+          <div class="mb-3">
+            <label for="updateName" class="form-label">Name</label>
+            <input class="form-control" id="updateName" v-model="displayName" placeholder="Your name">
+          </div>
+          <div class="mb-3">
+            <div class="d-flex flex-column">
+              <label for="updatePhotoURL" class="form-label">Profile picture</label>
+              <img :src="authUser.photoURL" v-if="authUser.photoURL">
+              <img src="https://thumbs.dreamstime.com/t/default-male-avatar-profile-picture-icon-grey-man-photo-placeholder-vector-illustration-88414414.jpg" v-else>
+            </div>
+            <input class="form-control" id="updatePhotoURL" v-model="photoURL" placeholder="Your photo url">
+          </div>
+          <button class="btn btn-primary">Update profile</button>
+        </form>
+
+        <form class="my-4" @submit.prevent="updateEmail">
+          <h2 class="mb-3">Update Email</h2>
+          <div class="mb-3">
+            <label for="updateEmail" class="form-label">Your email</label>
+            <input class="form-control" id="updateEmail" v-model="email" placeholder="Your email">
+          </div>
+          <button class="btn btn-primary">Update email</button>
+        </form>
+
+        <form @submit.prevent="updatePassword">
+          <h2 class="mb-3">Update Password</h2>
+          <div class="mb-3">
+            <label for="updatePassword" class="form-label">Your new password</label>
+            <input class="form-control" id="updatePassword" type="password" v-model="newPassword" placeholder="Your new password">
+          </div>
+          <button class="btn btn-primary">Update password</button>
+        </form>
+      </div>
+
+      <!-- Not logged in -->
+      <div v-else>
+        <form @submit.prevent="signIn">
+          <h2 class="mb-3">Sign in</h2>
+          <div class="mb-3">
+            <label for="signInEmail" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="signInEmail" v-model="email" placeholder="Type your email">
+          </div>
+          <div class="mb-3">
+            <label for="signInPassword" class="form-label">Password</label>
+            <input type="password" class="form-control" id="signInPassword" v-model="password" placeholder="Type your password">
+          </div>
+          <button class="btn btn-primary">Sign in</button>
+        </form>
+
+        <div class="my-5">
+          <h2 class="mb-3">Sign in with Google</h2>
+          <button class="btn btn-google" @click="signInWithGoogle"><img src="images/icon-google.png"> Sign in</button>
+        </div>
+
+        <form @submit.prevent="register">
+          <h2>Register with an email</h2>
+          <div class="mb-3">
+            <label for="registerEmail" class="form-label">Email</label>
+            <input type="email" class="form-control" id="registerEmail" v-model="registerEmail" placeholder="Type your email">
+          </div>
+          <div class="mb-3">
+            <label for="registerPassword" class="form-label">Password</label>
+            <input type="password" class="form-control" id="registerPassword" v-model="registerPassword" placeholder="Pick your password">
+          </div>
+          <button class="btn btn-primary">Register</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    var firebaseConfig = {
+      apiKey: "AIzaSyBqgLdvMyoGVC0VocuIMx40LMc7aGC3gos",
+      authDomain: "vueschool-firebaseauth.firebaseapp.com",
+      projectId: "vueschool-firebaseauth",
+      storageBucket: "vueschool-firebaseauth.appspot.com",
+      messagingSenderId: "900904239183",
+      appId: "1:900904239183:web:b831d6a99460c546902a3a",
+      measurementId: "G-J501B37NF8"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+
+    // Vue Instance
+    new Vue({
+      el: '#app',
+
+      data: {
+        email: '',
+        registerEmail: '',
+        password: '',
+        registerPassword: '',
+        displayName: null,
+        photoURL: null,
+        newPassword: null,
+        authUser: null
+      },
+
+      computed: {
+        linkedGoogle() {
+          return !!this.authUser.providerData.find(provider => provider.providerId === 'google.com')
+        },
+        linkedPassword() {
+          return !!this.authUser.providerData.find(provider => provider.providerId === 'password')
+        }
+      },
+
+      methods: {
+        register() {
+          firebase.auth().createUserWithEmailAndPassword(this.registerEmail, this.registerPassword)
+            .catch(error => alert('Oops! ' + error.message))
+        },
+        signOut() {
+          firebase.auth().signOut()
+            .then(() => { this.email = null, this.password = null, this.registerEmail = null, this.registerPassword = null })
+        },
+        signIn() {
+          firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+            .catch(error => alert('Oops! ' + error.message))
+        },
+        signInWithGoogle() {
+          const provider = new firebase.auth.GoogleAuthProvider()
+          firebase.auth().signInWithPopup(provider)
+            .catch(error => alert('Oops! ' + error.message))
+            .then(data => console.log(data.user, data.credential.accessToken))
+        },
+        linkGoogle() {
+          const provider = new firebase.auth.GoogleAuthProvider()
+          this.authUser.linkWithPopup(provider)
+            .catch(error => alert('Oops! ' + error.message))
+            .then(data => console.log(data.user, data.credential.accessToken))
+        },
+        unlinkGoogle() {
+          this.authUser.unlink('google.com')
+        },
+        updateProfile() {
+          this.authUser.updateProfile({
+            displayName: this.displayName,
+            photoURL: this.photoURL,
+          })
+        },
+        updateEmail() {
+          this.authUser.updateEmail(this.email)
+        },
+        updatePassword() {
+          this.authUser.updatePassword(this.newPassword)
+            .then(() => { this.newPassword = null })
+            .catch(error => alert('Oops! ' + error.message))
+        }
+      },
+
+      created() {
+        firebase.auth().onAuthStateChanged(user => { 
+          this.authUser = user 
+          if(user) {
+            this.displayName = user.displayName
+            this.photoURL = user.photoURL
+            this.email = user.email
+          }
+        })
+      }
+    })    
+  </script>
+</body>
+</html>

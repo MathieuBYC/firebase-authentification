@@ -1,0 +1,71 @@
+body {
+    background: #FFF;
+    color: #111;
+}
+
+form img {
+    margin: 16px 0;
+    max-width: 80px;
+}
+
+.btn {
+    border-radius: 50px;
+    border-width: 0;
+    display: inline-block;
+    font-size: 20px;
+    line-height: 48px;
+    padding: 0 20px;
+    transition: all .3s ease-in-out;
+}
+
+.btn-primary {
+    background: #FFFAA6;
+    color: #111;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle, .btn-primary:not(:disabled):not(.disabled).active:focus, .btn-primary:not(:disabled):not(.disabled):active:focus, .show>.btn-primary.dropdown-toggle:focus {
+    background: #faf595;
+    border-color: transparent;
+    box-shadow: none;
+    color: #111;
+}
+
+.btn-google {
+    align-items: center;
+    background: #4688F1;
+    color: #fff;
+    display: flex;
+}
+
+.btn-google:hover {
+    background: rgb(50, 122, 240);
+    color: #fff;
+}
+
+.btn-google img {
+    margin-right: 8px;
+    max-width: 16px;
+}
+
+.navbar {
+    background-color: #363C4A;
+    color: #fff;
+}
+
+.navbar__content {
+    width: 100%;
+}
+
+.navbar__name {
+    font-size: 18px;
+}
+
+.navbar__content img {
+    border-radius: 50%;
+    max-height: 32px;
+}
+
+.navbar .btn {
+    font-size: 16px;
+    padding: 0 16px;
+}
